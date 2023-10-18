@@ -81,8 +81,13 @@ def get_all_webhooks(
 
     Raises:
     """
-    webhook = db.session.query(Webhooks).filter(Webhooks.org_id == organisation.id, Webhooks.is_deleted == False).first()
-    return webhook
+    return (
+        db.session.query(Webhooks)
+        .filter(
+            Webhooks.org_id == organisation.id, Webhooks.is_deleted == False
+        )
+        .first()
+    )
 
 @router.post("/edit/{webhook_id}", response_model=WebHookOut)
 def edit_webhook(

@@ -10,7 +10,5 @@ class Pinecone(VectorEmbeddings):
         
     def get_vector_embeddings_from_chunks(self):
         """ Returns embeddings for vector dbs from final chunks"""
-        result = {}
         vectors = list(zip(self.uuid, self.embeds, self.metadata))
-        result['vectors'] = vectors
-        return result
+        return {'vectors': vectors}

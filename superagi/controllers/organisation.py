@@ -91,10 +91,14 @@ def get_organisation(organisation_id: int, Authorize: AuthJWT = Depends(check_au
 
     """
 
-    db_organisation = db.session.query(Organisation).filter(Organisation.id == organisation_id).first()
-    if not db_organisation:
+    if (
+        db_organisation := db.session.query(Organisation)
+        .filter(Organisation.id == organisation_id)
+        .first()
+    ):
+        return db_organisation
+    else:
         raise HTTPException(status_code=404, detail="organisation not found")
-    return db_organisation
 
 
 @router.put("/update/{organisation_id}", response_model=OrganisationOut)
@@ -172,9 +176,7 @@ def get_llm_models(organisation=Depends(get_user_organisation)):
 
     decrypted_api_key = decrypt_data(model_api_key.value)
     model = build_model_with_api_key(model_source.value, decrypted_api_key)
-    models = model.get_models() if model is not None else []
-
-    return models
+    return model.get_models() if model is not None else []
 
 
 @router.get("/agent_workflows")
@@ -187,8 +189,6 @@ def agent_workflows(organisation=Depends(get_user_organisation)):
     """
 
     agent_workflows = db.session.query(AgentWorkflow).all()
-    workflows = [workflow.name for workflow in agent_workflows]
-
-    return workflows
+    return [workflow.name for workflow in agent_workflows]
 
 

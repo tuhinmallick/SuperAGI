@@ -39,23 +39,25 @@ class KnowledgeHandler:
         if knowledge_used_event is None:
             return {}
 
-        knowledge_data = {
-                'knowledge_unique_agents': knowledge_used_event.knowledge_unique_agents,
-                'knowledge_calls': self.session.query(
-                    EventAlias
-                ).filter(
-                    EventAlias.event_property['tool_name'].astext == 'Knowledge Search',
-                    EventAlias.event_name == 'tool_used',
-                    EventAlias.org_id == self.organisation_id,
-                    EventAlias.agent_id.in_(self.session.query(Event.agent_id).filter(
+        return {
+            'knowledge_unique_agents': knowledge_used_event.knowledge_unique_agents,
+            'knowledge_calls': self.session.query(EventAlias)
+            .filter(
+                EventAlias.event_property['tool_name'].astext
+                == 'Knowledge Search',
+                EventAlias.event_name == 'tool_used',
+                EventAlias.org_id == self.organisation_id,
+                EventAlias.agent_id.in_(
+                    self.session.query(Event.agent_id).filter(
                         Event.event_name == 'knowledge_picked',
                         Event.org_id == self.organisation_id,
-                        Event.event_property['knowledge_name'].astext == knowledge_name
-                    ))
-                ).count()
-            }
-
-        return knowledge_data
+                        Event.event_property['knowledge_name'].astext
+                        == knowledge_name,
+                    )
+                ),
+            )
+            .count(),
+        }
     
 
     def get_knowledge_events_by_name(self, knowledge_name: str) -> List[Dict[str, Union[str, int, List[str]]]]:
@@ -124,5 +126,8 @@ class KnowledgeHandler:
                 if agent_execution_id not in [i['agent_execution_id'] for i in results]:
                     results.append(result_dict)
 
-        results = sorted(results, key=lambda x: datetime.strptime(x['created_at'], '%d %B %Y %H:%M'), reverse=True)
-        return results
+        return sorted(
+            results,
+            key=lambda x: datetime.strptime(x['created_at'], '%d %B %Y %H:%M'),
+            reverse=True,
+        )

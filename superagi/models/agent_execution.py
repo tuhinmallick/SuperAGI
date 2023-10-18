@@ -142,7 +142,7 @@ class AgentExecution(DBBaseModel):
         return session.query(AgentExecution).filter(AgentExecution.id == execution_id).first()
 
     @classmethod
-    def update_tokens(self, session, agent_execution_id: int, total_tokens: int, new_llm_calls: int = 1):
+    def update_tokens(cls, session, agent_execution_id: int, total_tokens: int, new_llm_calls: int = 1):
         agent_execution = session.query(AgentExecution).filter(
             AgentExecution.id == agent_execution_id).first()
         agent_execution.num_of_calls += new_llm_calls
@@ -169,18 +169,35 @@ class AgentExecution(DBBaseModel):
 
     @classmethod
     def get_execution_by_agent_id_and_status(cls, session, agent_id: int, status_filter: str):
-        db_agent_execution = session.query(AgentExecution).filter(AgentExecution.agent_id == agent_id, AgentExecution.status == status_filter).first()
-        return db_agent_execution
+        return (
+            session.query(AgentExecution)
+            .filter(
+                AgentExecution.agent_id == agent_id,
+                AgentExecution.status == status_filter,
+            )
+            .first()
+        )
 
 
     @classmethod
     def get_all_executions_by_status_and_agent_id(cls, session, agent_id, execution_state_change_input, current_status: str):
         db_execution_arr = []
-        if  execution_state_change_input.run_ids is not None:
-            db_execution_arr = session.query(AgentExecution).filter(AgentExecution.agent_id == agent_id, AgentExecution.status == current_status,AgentExecution.id.in_(execution_state_change_input.run_ids)).all()
-        else:
-            db_execution_arr = session.query(AgentExecution).filter(AgentExecution.agent_id == agent_id, AgentExecution.status == current_status).all()
-        return db_execution_arr
+        return (
+            session.query(AgentExecution)
+            .filter(
+                AgentExecution.agent_id == agent_id,
+                AgentExecution.status == current_status,
+                AgentExecution.id.in_(execution_state_change_input.run_ids),
+            )
+            .all()
+            if execution_state_change_input.run_ids is not None
+            else session.query(AgentExecution)
+            .filter(
+                AgentExecution.agent_id == agent_id,
+                AgentExecution.status == current_status,
+            )
+            .all()
+        )
     
     @classmethod
     def get_all_executions_by_filter_config(cls, session, agent_id: int, filter_config):
@@ -193,8 +210,7 @@ class AgentExecution(DBBaseModel):
                                                                                                "TERMINATED"]:
             db_execution_query = db_execution_query.filter(AgentExecution.status == filter_config.run_status_filter)
 
-        db_execution_arr = db_execution_query.all()
-        return db_execution_arr
+        return db_execution_query.all()
 
     @classmethod
     def validate_run_ids(cls, session, run_ids: list, organisation_id: int):
@@ -210,4 +226,4 @@ class AgentExecution(DBBaseModel):
         org_ids = [id for (id,) in org_ids]
 
         if len(org_ids) > 1 or org_ids[0] != organisation_id:
-            raise Exception(f"one or more run IDs not found")
+            raise Exception("one or more run IDs not found")

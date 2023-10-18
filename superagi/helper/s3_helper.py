@@ -53,11 +53,13 @@ class S3Helper:
             raise HTTPException(status_code=500, detail="AWS credentials not found. Check your configuration.")
 
     def check_file_exists_in_s3(self, file_path):
-        response = self.s3.list_objects_v2(Bucket=get_config("BUCKET_NAME"), Prefix="resources" + file_path)
+        response = self.s3.list_objects_v2(
+            Bucket=get_config("BUCKET_NAME"), Prefix=f"resources{file_path}"
+        )
         return 'Contents' in response
 
     def read_from_s3(self, file_path):
-        file_path = "resources" + file_path
+        file_path = f"resources{file_path}"
         logger.info(f"Reading file from s3: {file_path}")
         response = self.s3.get_object(Bucket=get_config("BUCKET_NAME"), Key=file_path)
         if response['ResponseMetadata']['HTTPStatusCode'] == 200:
@@ -65,7 +67,7 @@ class S3Helper:
         raise Exception(f"Error read_from_s3: {response}")
 
     def read_binary_from_s3(self, file_path):
-        file_path = "resources" + file_path
+        file_path = f"resources{file_path}"
         logger.info(f"Reading file from s3: {file_path}")
         response = self.s3.get_object(Bucket=get_config("BUCKET_NAME"), Key=file_path)
         if response['ResponseMetadata']['HTTPStatusCode'] == 200:
@@ -103,7 +105,7 @@ class S3Helper:
             None
         """
         try:
-            path = "resources" + path
+            path = f"resources{path}"
             self.s3.delete_object(Bucket=self.bucket_name, Key=path)
             logger.info("File deleted from S3 successfully!")
         except:
@@ -140,14 +142,12 @@ class S3Helper:
 
     def list_files_from_s3(self, file_path):
         try:
-            file_path = "resources" + file_path
+            file_path = f"resources{file_path}"
             logger.info(f"Listing files from s3 with prefix: {file_path}")
             response = self.s3.list_objects_v2(Bucket=get_config("BUCKET_NAME"), Prefix=file_path)
-            if 'Contents' in response:
-                logger.info(response['Contents'])
-                file_list = [obj['Key'] for obj in response['Contents']]
-                return file_list
-            else:
-                raise Exception(f"No contents in S3 response")
+            if 'Contents' not in response:
+                raise Exception("No contents in S3 response")
+            logger.info(response['Contents'])
+            return [obj['Key'] for obj in response['Contents']]
         except:
-            raise Exception(f"Error listing files from s3")
+            raise Exception("Error listing files from s3")

@@ -57,50 +57,49 @@ class ImproveCodeTool(BaseTool):
         logger.info(file_names)
         # Loop through each file
         for file_name in file_names:
-            if '.txt' not in file_name and '.sh' not in file_name and '.json' not in file_name:
-                # Read the file content
-                content = self.resource_manager.read_file(file_name)
-
-                # Generate a prompt from improve_code.txt
-                prompt = PromptReader.read_tools_prompt(__file__, "improve_code.txt")
-
-                # Combine the hint from the file, goals, and content
-                prompt = prompt.replace("{goals}", AgentPromptBuilder.add_list_items_to_string(self.goals))
-                prompt = prompt.replace("{content}", content)
-
-                # Add the file content to the chat completion prompt
-                prompt = prompt + "\nOriginal Code:\n```\n" + content + "\n```"
-
-
-
-                # Use LLM to generate improved code
-                result = self.llm.chat_completion([{'role': 'system', 'content': prompt}])
-                
-                if result is not None and 'error' in result and result['message'] is not None:
-                   ErrorHandler.handle_openai_errors(self.toolkit_config.session, self.agent_id, self.agent_execution_id, result['message'])
-
-                # Extract the response first
-                response = result.get('response')
-                if not response: 
-                    logger.info("RESPONSE NOT AVAILABLE")
-
-                # Now extract the choices from response
-                choices = response.get('choices')
-                if not choices: 
-                    logger.info("CHOICES NOT AVAILABLE")
-
-                # Now you can safely extract the message content
-                improved_content = choices[0]["message"]["content"]
-                # improved_content = result["messages"][0]["content"]
-                parsed_content = re.findall("```(?:\w*\n)?(.*?)```", improved_content, re.DOTALL)
-                parsed_content_code = "\n".join(parsed_content)
-
-                # Rewrite the file with the improved content
-                save_result = self.resource_manager.write_file(file_name, parsed_content_code)
-
-                if save_result.startswith("Error"):
-                    return save_result
-            else:
+            if '.txt' in file_name or '.sh' in file_name or '.json' in file_name:
                 continue
 
-        return f"All codes improved and saved successfully in: " + " ".join(file_names)
+            # Read the file content
+            content = self.resource_manager.read_file(file_name)
+
+            # Generate a prompt from improve_code.txt
+            prompt = PromptReader.read_tools_prompt(__file__, "improve_code.txt")
+
+            # Combine the hint from the file, goals, and content
+            prompt = prompt.replace("{goals}", AgentPromptBuilder.add_list_items_to_string(self.goals))
+            prompt = prompt.replace("{content}", content)
+
+            # Add the file content to the chat completion prompt
+            prompt = prompt + "\nOriginal Code:\n```\n" + content + "\n```"
+
+
+
+            # Use LLM to generate improved code
+            result = self.llm.chat_completion([{'role': 'system', 'content': prompt}])
+
+            if result is not None and 'error' in result and result['message'] is not None:
+               ErrorHandler.handle_openai_errors(self.toolkit_config.session, self.agent_id, self.agent_execution_id, result['message'])
+
+            # Extract the response first
+            response = result.get('response')
+            if not response: 
+                logger.info("RESPONSE NOT AVAILABLE")
+
+            # Now extract the choices from response
+            choices = response.get('choices')
+            if not choices: 
+                logger.info("CHOICES NOT AVAILABLE")
+
+            # Now you can safely extract the message content
+            improved_content = choices[0]["message"]["content"]
+            # improved_content = result["messages"][0]["content"]
+            parsed_content = re.findall("```(?:\w*\n)?(.*?)```", improved_content, re.DOTALL)
+            parsed_content_code = "\n".join(parsed_content)
+
+            # Rewrite the file with the improved content
+            save_result = self.resource_manager.write_file(file_name, parsed_content_code)
+
+            if save_result.startswith("Error"):
+                return save_result
+        return "All codes improved and saved successfully in: " + " ".join(file_names)

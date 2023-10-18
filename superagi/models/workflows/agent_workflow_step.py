@@ -131,7 +131,7 @@ class AgentWorkflowStep(DBBaseModel):
         workflow_step = session.query(AgentWorkflowStep).filter(
             AgentWorkflowStep.agent_workflow_id == agent_workflow_id, AgentWorkflowStep.unique_id == unique_id).first()
         if completion_prompt is None:
-            completion_prompt = f"Respond with only valid JSON conforming to the given json schema. Response should contain tool name and tool arguments to achieve the given instruction."
+            completion_prompt = "Respond with only valid JSON conforming to the given json schema. Response should contain tool name and tool arguments to achieve the given instruction."
         step_tool = AgentWorkflowStepTool.find_or_create_tool(session, unique_id, tool_name,
                                                               input_instruction, output_instruction,
                                                               history_enabled, completion_prompt)
@@ -224,13 +224,15 @@ class AgentWorkflowStep(DBBaseModel):
             next_unique_id = next_workflow_step.unique_id
         current_step = session.query(AgentWorkflowStep).filter(AgentWorkflowStep.id == current_agent_step_id).first()
         next_steps = json.loads(json.dumps(current_step.next_steps))
-        existing_steps = [step for step in next_steps if step["step_id"] == next_unique_id]
-        if existing_steps:
+        if existing_steps := [
+            step for step in next_steps if step["step_id"] == next_unique_id
+        ]:
             existing_steps[0]["step_response"] = step_response
-            current_step.next_steps = next_steps
         else:
-            next_steps.append({"step_response": str(step_response), "step_id": str(next_unique_id)})
-            current_step.next_steps = next_steps
+            next_steps.append(
+                {"step_response": step_response, "step_id": str(next_unique_id)}
+            )
+        current_step.next_steps = next_steps
         session.commit()
         return current_step
 
@@ -244,8 +246,9 @@ class AgentWorkflowStep(DBBaseModel):
         """
         current_step = AgentWorkflowStep.find_by_id(session, current_agent_step_id)
         next_steps = current_step.next_steps
-        default_steps = [step for step in next_steps if step["step_response"] == "default"]
-        if default_steps:
+        if default_steps := [
+            step for step in next_steps if step["step_response"] == "default"
+        ]:
             return AgentWorkflowStep.find_by_unique_id(session, default_steps[0]["step_id"])
         return None
 
@@ -260,17 +263,21 @@ class AgentWorkflowStep(DBBaseModel):
         """
         current_step = AgentWorkflowStep.find_by_id(session, current_agent_step_id)
         next_steps = current_step.next_steps
-        matching_steps = [step for step in next_steps if str(step["step_response"]).lower() == step_response.lower()]
-
-        if matching_steps:
+        if matching_steps := [
+            step
+            for step in next_steps
+            if str(step["step_response"]).lower() == step_response.lower()
+        ]:
             if str(matching_steps[0]["step_id"]) == "-1":
                 return "COMPLETE"
             return AgentWorkflowStep.find_by_unique_id(session, matching_steps[0]["step_id"])
 
         logger.info(f"Could not find next step for step_id: {current_agent_step_id} and step_response: {step_response}")
-        default_steps = [step for step in next_steps if str(step["step_response"]).lower() == "default"]
-
-        if default_steps:
+        if default_steps := [
+            step
+            for step in next_steps
+            if str(step["step_response"]).lower() == "default"
+        ]:
             if str(default_steps[0]["step_id"]) == "-1":
                 return "COMPLETE"
             return AgentWorkflowStep.find_by_unique_id(session, default_steps[0]["step_id"])

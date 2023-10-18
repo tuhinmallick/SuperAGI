@@ -15,14 +15,16 @@ router = APIRouter()
 
 @router.get("/get/list")
 def get_vector_db_list():
-    marketplace_vector_dbs = Vectordbs.fetch_marketplace_list()
-    return marketplace_vector_dbs
+    return Vectordbs.fetch_marketplace_list()
 
 @router.get("/marketplace/list")
 def get_marketplace_vectordb_list():
     organisation_id = int(get_config("MARKETPLACE_ORGANISATION_ID"))
-    vector_dbs = db.session.query(Vectordbs).filter(Vectordbs.organisation_id == organisation_id).all()
-    return vector_dbs
+    return (
+        db.session.query(Vectordbs)
+        .filter(Vectordbs.organisation_id == organisation_id)
+        .all()
+    )
 
 @router.get("/user/list")
 def get_user_connected_vector_db_list(organisation = Depends(get_user_organisation)):
@@ -43,9 +45,7 @@ def get_vector_db_details(vector_db_id: int):
     vector_db_config = VectordbConfigs.get_vector_db_config_from_db_id(db.session, vector_db_id)
     vector_db_with_config = vector_db_data | vector_db_config
     indices = db.session.query(VectordbIndices).filter(VectordbIndices.vector_db_id == vector_db_id).all()
-    vector_indices = []
-    for index in indices:
-        vector_indices.append(index.name)
+    vector_indices = [index.name for index in indices]
     vector_db_with_config["indices"] = vector_indices
     return vector_db_with_config
 

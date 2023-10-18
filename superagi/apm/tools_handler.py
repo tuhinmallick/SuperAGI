@@ -89,12 +89,7 @@ class ToolsHandler:
             tool_calls += tool_name_event.tool_calls
             tool_unique_agents += tool_name_event.tool_unique_agents
 
-        tool_data = {
-            'tool_calls': tool_calls,
-            'tool_unique_agents': tool_unique_agents
-        }   
-
-        return tool_data
+        return {'tool_calls': tool_calls, 'tool_unique_agents': tool_unique_agents}
 
 
     def get_tool_events_by_name(self, tool_name: str) -> List[Dict[str, Union[str, int, List[str]]]]:
@@ -175,7 +170,9 @@ class ToolsHandler:
                 if agent_execution_id not in [i['agent_execution_id'] for i in results]:
                     results.append(result_dict)
 
-        results = sorted(results, key=lambda x: datetime.strptime(x['created_at'], '%d %B %Y %H:%M'), reverse=True)
-
-        return results
+        return sorted(
+            results,
+            key=lambda x: datetime.strptime(x['created_at'], '%d %B %Y %H:%M'),
+            reverse=True,
+        )
     

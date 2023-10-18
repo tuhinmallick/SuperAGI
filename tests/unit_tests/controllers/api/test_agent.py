@@ -15,8 +15,7 @@ client = TestClient(app)
 
 @pytest.fixture
 def mock_api_key_get():
-    mock_api_key = "your_mock_api_key"
-    return mock_api_key
+    return "your_mock_api_key"
 @pytest.fixture
 def mock_execution_state_change_input():
     return {

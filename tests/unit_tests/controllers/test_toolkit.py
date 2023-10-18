@@ -62,8 +62,7 @@ def mocks():
 
 @pytest.fixture
 def mock_toolkit_details():
-    # Mock toolkit details data for testing
-    toolkit_details = {
+    return {
         "name": "toolkit_1",
         "description": "Test Toolkit",
         "tool_code_link": "https://example.com/toolkit_1",
@@ -74,15 +73,15 @@ def mock_toolkit_details():
                 "description": "Test Tool 1",
                 "folder_name": "test_folder_1",
                 "class_name": "TestTool1",
-                "file_name": "test_tool_1.py"
+                "file_name": "test_tool_1.py",
             },
             {
                 "name": "tool_2",
                 "description": "Test Tool 2",
                 "folder_name": "test_folder_2",
                 "class_name": "TestTool2",
-                "file_name": "test_tool_2.py"
-            }
+                "file_name": "test_tool_2.py",
+            },
         ],
         "configs": [
             {
@@ -90,19 +89,17 @@ def mock_toolkit_details():
                 "value": "config_value_1",
                 'key_type': ToolConfigKeyType.STRING,
                 'is_secret': True,
-                'is_required': False
+                'is_required': False,
             },
             {
                 "key": "config_key_2",
                 "value": "config_value_2",
                 'key_type': ToolConfigKeyType.FILE,
                 'is_secret': True,
-                'is_required': False
-
-            }
-        ]
+                'is_required': False,
+            },
+        ],
     }
-    return toolkit_details
 
 
 def test_handle_marketplace_operations_list(mocks):

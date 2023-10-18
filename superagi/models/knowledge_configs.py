@@ -34,16 +34,17 @@ class KnowledgeConfigs(DBBaseModel):
     def fetch_knowledge_config_details_marketplace(cls, knowledge_id: int):
         headers = {'Content-Type': 'application/json'}
         response = requests.get(
-            marketplace_url + f"/knowledge_configs/marketplace/details/{str(knowledge_id)}",
-            headers=headers, timeout=10)
-        if response.status_code == 200:
-            knowledge_config_data = response.json()
-            configs = {}
-            for knowledge_config in knowledge_config_data:
-                configs[knowledge_config["key"]] = knowledge_config["value"]
-            return configs
-        else:
+            f"{marketplace_url}/knowledge_configs/marketplace/details/{knowledge_id}",
+            headers=headers,
+            timeout=10,
+        )
+        if response.status_code != 200:
             return []
+        knowledge_config_data = response.json()
+        return {
+            knowledge_config["key"]: knowledge_config["value"]
+            for knowledge_config in knowledge_config_data
+        }
         
     @classmethod
     def add_update_knowledge_config(cls, session, knowledge_id, knowledge_configs):
@@ -55,10 +56,10 @@ class KnowledgeConfigs(DBBaseModel):
     @classmethod
     def get_knowledge_config_from_knowledge_id(cls, session, knowledge_id):
         knowledge_configs = session.query(KnowledgeConfigs).filter(KnowledgeConfigs.knowledge_id == knowledge_id).all()
-        configs = {}
-        for knowledge_config in knowledge_configs:
-            configs[knowledge_config.key] = knowledge_config.value
-        return configs
+        return {
+            knowledge_config.key: knowledge_config.value
+            for knowledge_config in knowledge_configs
+        }
     
     @classmethod
     def delete_knowledge_config(cls, session, knowledge_id):
@@ -68,7 +69,7 @@ class KnowledgeConfigs(DBBaseModel):
     @classmethod
     def get_knowledge_config_from_knowledge_id(cls, session, knowledge_id):
         knowledge_configs = session.query(KnowledgeConfigs).filter(KnowledgeConfigs.knowledge_id == knowledge_id).all()
-        configs = {}
-        for knowledge_config in knowledge_configs:
-            configs[knowledge_config.key] = knowledge_config.value
-        return configs
+        return {
+            knowledge_config.key: knowledge_config.value
+            for knowledge_config in knowledge_configs
+        }

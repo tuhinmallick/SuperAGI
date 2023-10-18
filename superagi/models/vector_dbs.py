@@ -36,24 +36,25 @@ class Vectordbs(DBBaseModel):
 
     @classmethod
     def get_vector_db_from_id(cls, session, vector_db_id):
-        vector_db = session.query(Vectordbs).filter(Vectordbs.id == vector_db_id).first()
-        return vector_db
+        return session.query(Vectordbs).filter(Vectordbs.id == vector_db_id).first()
 
     @classmethod
     def fetch_marketplace_list(cls):
         headers = {'Content-Type': 'application/json'}
         response = requests.get(
-            marketplace_url + f"/vector_dbs/marketplace/list",
-            headers=headers, timeout=10)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return []
+            f"{marketplace_url}/vector_dbs/marketplace/list",
+            headers=headers,
+            timeout=10,
+        )
+        return response.json() if response.status_code == 200 else []
 
     @classmethod
     def get_vector_db_from_organisation(cls, session, organisation):
-        vector_db_list = session.query(Vectordbs).filter(Vectordbs.organisation_id == organisation.id).all()
-        return vector_db_list
+        return (
+            session.query(Vectordbs)
+            .filter(Vectordbs.organisation_id == organisation.id)
+            .all()
+        )
 
     @classmethod
     def add_vector_db(cls, session, name, db_type, organisation):

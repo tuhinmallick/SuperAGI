@@ -27,17 +27,11 @@ def create_weaviate_client(
     Raises:
         ValueError: If invalid argument combination are passed.
     """
-    if url:
-        if api_key:
-            auth_config = weaviate.AuthApiKey(api_key=api_key)
-        else:
-            auth_config = None
-
-        client = weaviate.Client(url=url, auth_client_secret=auth_config)
-    else:
+    if not url:
         raise ValueError("Invalid arguments passed to create_weaviate_client")
 
-    return client
+    auth_config = weaviate.AuthApiKey(api_key=api_key) if api_key else None
+    return weaviate.Client(url=url, auth_client_secret=auth_config)
 
 
 class Weaviate(VectorStore):
@@ -94,10 +88,9 @@ class Weaviate(VectorStore):
     
     def _get_metadata_fields(self) -> List[str]:
         schema = self.client.schema.get(self.class_name)
-        property_names = []
-        for property_schema in schema["properties"]:
-            property_names.append(property_schema["name"])
-
+        property_names = [
+            property_schema["name"] for property_schema in schema["properties"]
+        ]
         property_names.remove(self.text_field)
         return property_names
 
@@ -110,7 +103,7 @@ class Weaviate(VectorStore):
         try:
             with self.client.batch as batch:
                 for i in range(len(embeddings['ids'])):
-                    data_object = {key: value for key, value in embeddings['data_object'][i].items()}
+                    data_object = dict(embeddings['data_object'][i].items())
                     batch.add_data_object(data_object, class_name=self.class_name, uuid=embeddings['ids'][i], vector=embeddings['vectors'][i])
         except Exception as err:
             raise err
@@ -129,19 +122,15 @@ class Weaviate(VectorStore):
         documents = []
         for result in results_data:
             text_content = result[self.text_field]
-            metadata = {}
-            for field in metadata_fields:
-                metadata[field] = result[field]
+            metadata = {field: result[field] for field in metadata_fields}
             document = Document(text_content=text_content, metadata=metadata)
             documents.append(document)
-        
+
         return documents
     
     def _get_search_res(self, results, query):
         text = [item['text'] for item in results]
         search_res = f"Query: {query}\n"
-        i = 0
-        for context in text:
+        for i, context in enumerate(text):
             search_res += f"Chunk{i}: \n{context}\n"
-            i += 1
         return search_res

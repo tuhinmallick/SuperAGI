@@ -91,10 +91,14 @@ class IterationWorkflow(DBBaseModel):
 
         """
 
-        trigger_step = session.query(IterationWorkflowStep).filter(
-            IterationWorkflowStep.iteration_workflow_id == workflow_id,
-            IterationWorkflowStep.step_type == 'TRIGGER').first()
-        return trigger_step
+        return (
+            session.query(IterationWorkflowStep)
+            .filter(
+                IterationWorkflowStep.iteration_workflow_id == workflow_id,
+                IterationWorkflowStep.step_type == 'TRIGGER',
+            )
+            .first()
+        )
 
     @classmethod
     def find_workflow_by_name(cls, session, name: str):

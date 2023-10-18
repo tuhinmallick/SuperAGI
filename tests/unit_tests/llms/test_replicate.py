@@ -45,7 +45,10 @@ class TestReplicate(TestCase):
 
         # Assert
         assert result is True
-        mock_get.assert_called_with("https://api.replicate.com/v1/collections", headers={"Authorization": "Token " + api_key})
+        mock_get.assert_called_with(
+            "https://api.replicate.com/v1/collections",
+            headers={"Authorization": f"Token {api_key}"},
+        )
 
     @patch.object(requests, "get")
     def test_verify_access_key_false(self, mock_get):

@@ -9,16 +9,15 @@ from superagi.models.models import Models
 
 @pytest.fixture()
 def setup_model_token_limit():
-    model_token_limit_dict = {
+    return {
         "gpt-3.5-turbo-0301": 4032,
         "gpt-4-0314": 8092,
         "gpt-3.5-turbo": 4032,
         "gpt-4": 8092,
         "gpt-3.5-turbo-16k": 16184,
         "gpt-4-32k": 32768,
-        "gpt-4-32k-0314": 32768
+        "gpt-4-32k-0314": 32768,
     }
-    return model_token_limit_dict
 
 
 @patch.object(Models, "fetch_model_tokens", autospec=True)

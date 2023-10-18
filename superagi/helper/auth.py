@@ -40,30 +40,32 @@ def get_user_organisation(Authorize: AuthJWT = Depends(check_auth)):
     user = get_current_user(Authorize)
     if user is None:
         raise HTTPException(status_code=401, detail="Unauthenticated")
-    organisation = db.session.query(Organisation).filter(Organisation.id == user.organisation_id).first()
-    return organisation
+    return (
+        db.session.query(Organisation)
+        .filter(Organisation.id == user.organisation_id)
+        .first()
+    )
 
 
 def get_current_user(Authorize: AuthJWT = Depends(check_auth)):
     env = get_config("ENV", "DEV")
 
-    if env == "DEV":
-        email = "super6@agi.com"
-    else:
-        # Retrieve the email of the logged-in user from the JWT token payload
-        email = Authorize.get_jwt_subject()
-
-    # Query the User table to find the user by their email
-    user = db.session.query(User).filter(User.email == email).first()
-    return user
+    email = "super6@agi.com" if env == "DEV" else Authorize.get_jwt_subject()
+    return db.session.query(User).filter(User.email == email).first()
 
 
 api_key_header = APIKeyHeader(name="X-API-Key")
 
 
 def validate_api_key(api_key: str = Security(api_key_header)) -> str:
-    query_result = db.session.query(ApiKey).filter(ApiKey.key == api_key,
-                                                   or_(ApiKey.is_expired == False, ApiKey.is_expired == None)).first()
+    query_result = (
+        db.session.query(ApiKey)
+        .filter(
+            ApiKey.key == api_key,
+            or_(ApiKey.is_expired == False, ApiKey.is_expired is None),
+        )
+        .first()
+    )
     if query_result is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -74,13 +76,22 @@ def validate_api_key(api_key: str = Security(api_key_header)) -> str:
 
 
 def get_organisation_from_api_key(api_key: str = Security(api_key_header)) -> Organisation:
-    query_result = db.session.query(ApiKey).filter(ApiKey.key == api_key,
-                                                   or_(ApiKey.is_expired == False, ApiKey.is_expired == None)).first()
+    query_result = (
+        db.session.query(ApiKey)
+        .filter(
+            ApiKey.key == api_key,
+            or_(ApiKey.is_expired == False, ApiKey.is_expired is None),
+        )
+        .first()
+    )
     if query_result is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing API Key",
         )
 
-    organisation = db.session.query(Organisation).filter(Organisation.id == query_result.org_id).first()
-    return  organisation
+    return (
+        db.session.query(Organisation)
+        .filter(Organisation.id == query_result.org_id)
+        .first()
+    )

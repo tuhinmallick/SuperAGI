@@ -32,9 +32,7 @@ def test_get_agent_execution_from_id():
 
 @pytest.fixture
 def mock_session(mocker):
-    # Create a mock for the session object
-    mock_session = mocker.Mock()
-    return mock_session
+    return mocker.Mock()
 
 
 def test_update_tokens(mock_session):

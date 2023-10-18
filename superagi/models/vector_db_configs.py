@@ -31,10 +31,7 @@ class VectordbConfigs(DBBaseModel):
     @classmethod
     def get_vector_db_config_from_db_id(cls, session, vector_db_id):
         vector_db_configs = session.query(VectordbConfigs).filter(VectordbConfigs.vector_db_id == vector_db_id).all()
-        config_data = {}
-        for config in vector_db_configs:
-            config_data[config.key] = config.value
-        return config_data
+        return {config.key: config.value for config in vector_db_configs}
 
     @classmethod
     def add_vector_db_config(cls, session, vector_db_id, db_creds):

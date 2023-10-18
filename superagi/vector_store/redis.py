@@ -42,7 +42,9 @@ class Redis(VectorStore):
         vector_group_id: vector group id used to index similar vectors.
         """
         redis_url = get_config('REDIS_URL')
-        self.redis_client = redis.Redis.from_url("redis://" + redis_url + "/0", decode_responses=True)
+        self.redis_client = redis.Redis.from_url(
+            f"redis://{redis_url}/0", decode_responses=True
+        )
         # self.redis_client = redis.Redis(host=redis_host, port=redis_port)
         self.index = index
         self.embedding_model = embedding_model
@@ -78,39 +80,36 @@ class Redis(VectorStore):
 
     def get_matching_text(self, query: str, top_k: int = 5, metadata: Optional[dict] = None, **kwargs: Any) -> List[Document]:
         
-            embed_text = self.embedding_model.get_embedding(query)
-            from redis.commands.search.query import Query
-            hybrid_fields = self._convert_to_redis_filters(metadata)
-            
-            base_query = f"{hybrid_fields}=>[KNN {top_k} @{self.vector_key} $vector AS vector_score]"
-            return_fields = [METADATA_KEY,CONTENT_KEY, "vector_score",'id']          
-            query = (
-                Query(base_query)
-                .return_fields(*return_fields)
-                .sort_by("vector_score")
-                .paging(0, top_k)
-                .dialect(2)
+        embed_text = self.embedding_model.get_embedding(query)
+        from redis.commands.search.query import Query
+        hybrid_fields = self._convert_to_redis_filters(metadata)
+
+        base_query = f"{hybrid_fields}=>[KNN {top_k} @{self.vector_key} $vector AS vector_score]"
+        return_fields = [METADATA_KEY,CONTENT_KEY, "vector_score",'id']
+        query = (
+            Query(base_query)
+            .return_fields(*return_fields)
+            .sort_by("vector_score")
+            .paging(0, top_k)
+            .dialect(2)
+        )
+
+        params_dict: Mapping[str, str] = {
+            "vector": np.array(embed_text)
+            .astype(dtype=np.float32)
+            .tobytes()
+        }
+
+        # print(self.index)
+        results = self.redis_client.ft(self.index).search(query,params_dict)
+
+        documents = [
+            Document(
+                text_content=result.content, metadata=json.loads(result.metadata)
             )
-
-            params_dict: Mapping[str, str] = {
-                "vector": np.array(embed_text)
-                .astype(dtype=np.float32)
-                .tobytes()
-            }
-
-            # print(self.index)
-            results = self.redis_client.ft(self.index).search(query,params_dict)
-            
-                # Prepare document results
-            documents = []
-            for result in results.docs:
-                documents.append(
-                    Document(
-                        text_content=result.content,
-                        metadata=json.loads(result.metadata)
-                    )
-                )
-            return {"documents": documents}
+            for result in results.docs
+        ]
+        return {"documents": documents}
         
         
 

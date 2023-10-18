@@ -28,9 +28,9 @@ def handler():
     agent_id = 1
     agent_execution_id = 1
 
-    # Creating an instance of the class to test
-    handler = AgentToolStepHandler(mock_session, llm, agent_id, agent_execution_id, None)
-    return handler
+    return AgentToolStepHandler(
+        mock_session, llm, agent_id, agent_execution_id, None
+    )
 
 
 def test_create_permission_request(handler):

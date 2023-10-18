@@ -32,8 +32,7 @@ def get_knowledge_list(
         dict: The response containing the marketplace list.
 
     """
-    if page < 0:
-        page = 0
+    page = max(page, 0)
     marketplace_knowledges = Knowledges.fetch_marketplace_list(page)
     marketplace_knowledges_with_install = Knowledges.get_knowledge_install_details(db.session, marketplace_knowledges, organisation)
     for knowledge in marketplace_knowledges_with_install:
@@ -60,10 +59,9 @@ def get_user_knowledge_list(organisation = Depends(get_user_organisation)):
     marketplace_knowledges = Knowledges.fetch_marketplace_list(page=0)
     user_knowledge_list = Knowledges.get_organisation_knowledges(db.session, organisation)
     for user_knowledge in user_knowledge_list:
-        if user_knowledge["name"] in [knowledge['name'] for knowledge in marketplace_knowledges]:
-            user_knowledge["is_marketplace"] = True
-        else:
-            user_knowledge["is_marketplace"] = False
+        user_knowledge["is_marketplace"] = user_knowledge["name"] in [
+            knowledge['name'] for knowledge in marketplace_knowledges
+        ]
     return user_knowledge_list
 
 @router.get("/marketplace/get/details/{knowledge_name}")
@@ -80,8 +78,14 @@ def get_knowledge_details(knowledge_name: str):
 @router.get("/marketplace/details/{knowledge_name}")
 def get_marketplace_knowledge_details(knowledge_name: str):
     organisation_id = int(get_config("MARKETPLACE_ORGANISATION_ID"))
-    knowledge_details = db.session.query(Knowledges).filter(Knowledges.name == knowledge_name, Knowledges.organisation_id == organisation_id).first()
-    return knowledge_details
+    return (
+        db.session.query(Knowledges)
+        .filter(
+            Knowledges.name == knowledge_name,
+            Knowledges.organisation_id == organisation_id,
+        )
+        .first()
+    )
 
 @router.get("/user/get/details/{knowledge_id}")
 def get_user_knowledge_details(knowledge_id: int):
@@ -99,17 +103,18 @@ def get_user_knowledge_details(knowledge_id: int):
         "installation_type": vector_database_index.state
     }
     knowledge_config = KnowledgeConfigs.get_knowledge_config_from_knowledge_id(db.session, knowledge_id)
-    knowledge_data_with_config = knowledge | knowledge_config
-    return knowledge_data_with_config
+    return knowledge | knowledge_config
 
 @router.post("/add_or_update/data")
 def add_update_user_knowledge(knowledge_data: dict, organisation = Depends(get_user_organisation)):
     knowledge_data["organisation_id"] = organisation.id
     knowledge_data["contributed_by"] = organisation.name
-    knowledge = Knowledges.add_update_knowledge(db.session, knowledge_data)
-    if not knowledge:
+    if knowledge := Knowledges.add_update_knowledge(
+        db.session, knowledge_data
+    ):
+        return {"id": knowledge.id}
+    else:
         raise HTTPException(status_code=404, detail="Knowledge not found")
-    return {"id": knowledge.id}
 
 
 @router.post("/delete/{knowledge_id}")

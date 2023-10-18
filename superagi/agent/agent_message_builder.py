@@ -48,8 +48,10 @@ class AgentLlmMessageBuilder:
                                                                    output_token_limit=(token_limit - base_token_limit - max_output_token_limit) // 4)
                 messages.append({"role": "assistant", "content": ltm_summary})
 
-            for history in current_messages:
-                messages.append({"role": history["role"], "content": history["content"]})
+            messages.extend(
+                {"role": history["role"], "content": history["content"]}
+                for history in current_messages
+            )
             messages.append({"role": "user", "content": completion_prompt})
 
         # insert initial agent feeds
@@ -136,9 +138,10 @@ class AgentLlmMessageBuilder:
     def _build_prompt_for_ltm_summary(self, past_messages: List[BaseMessage], token_limit: int):
         ltm_summary_prompt = PromptReader.read_agent_prompt(__file__, "agent_summary.txt")
 
-        past_messages_prompt = ""
-        for past_message in past_messages:
-            past_messages_prompt += past_message["role"] + ": " + past_message["content"] + "\n"
+        past_messages_prompt = "".join(
+            past_message["role"] + ": " + past_message["content"] + "\n"
+            for past_message in past_messages
+        )
         ltm_summary_prompt = ltm_summary_prompt.replace("{past_messages}", past_messages_prompt)
 
         ltm_summary_prompt = ltm_summary_prompt.replace("{char_limit}", str(token_limit*4))
@@ -151,9 +154,10 @@ class AgentLlmMessageBuilder:
 
         ltm_summary_prompt = ltm_summary_prompt.replace("{previous_ltm_summary}", previous_ltm_summary)
 
-        past_messages_prompt = ""
-        for past_message in past_messages:
-            past_messages_prompt += past_message["role"] + ": " + past_message["content"] + "\n"
+        past_messages_prompt = "".join(
+            past_message["role"] + ": " + past_message["content"] + "\n"
+            for past_message in past_messages
+        )
         ltm_summary_prompt = ltm_summary_prompt.replace("{past_messages}", past_messages_prompt)
 
         ltm_summary_prompt = ltm_summary_prompt.replace("{char_limit}", str(token_limit*4))

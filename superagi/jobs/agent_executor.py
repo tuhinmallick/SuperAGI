@@ -52,8 +52,10 @@ class AgentExecutor:
 
             agent = session.query(Agent).filter(Agent.id == agent_execution.agent_id).first()
             agent_config = Agent.fetch_configuration(session, agent.id)
-            if agent.is_deleted or (
-                    agent_execution.status != AgentExecutionStatus.RUNNING.value and agent_execution.status != AgentExecutionStatus.WAITING_FOR_PERMISSION.value):
+            if agent.is_deleted or agent_execution.status not in [
+                AgentExecutionStatus.RUNNING.value,
+                AgentExecutionStatus.WAITING_FOR_PERMISSION.value,
+            ]:
                 logger.error(f"Agent execution stopped. {agent.id}: {agent_execution.status}")
                 return
 
@@ -89,17 +91,17 @@ class AgentExecutor:
                                              model_api_key, organisation, session)
 
             except Exception as e:
-                logger.info("Exception in executing the step: {}".format(e))
+                logger.info(f"Exception in executing the step: {e}")
                 superagi.worker.execute_agent.apply_async((agent_execution_id, datetime.now()), countdown=15)
                 return
 
             agent_execution = session.query(AgentExecution).filter(AgentExecution.id == agent_execution_id).first()
-            if agent_execution.status == "COMPLETED" or agent_execution.status == "WAITING_FOR_PERMISSION":
+            if agent_execution.status in ["COMPLETED", "WAITING_FOR_PERMISSION"]:
                 logger.info("Agent Execution is completed or waiting for permission")
                 session.close()
                 return
             superagi.worker.execute_agent.apply_async((agent_execution_id, datetime.now()), countdown=2)
-            # superagi.worker.execute_agent.delay(agent_execution_id, datetime.now())
+                # superagi.worker.execute_agent.delay(agent_execution_id, datetime.now())
         finally:
             session.close()
             engine.dispose()

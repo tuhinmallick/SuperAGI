@@ -97,9 +97,7 @@ class IterationWorkflowStep(DBBaseModel):
         return session.query(IterationWorkflowStep).filter(IterationWorkflowStep.id == step_id).first()
 
     @classmethod
-    def find_or_create_step(self, session, iteration_workflow_id: int, unique_id: str,
-                            prompt: str, variables: str, step_type: str, output_type: str,
-                            completion_prompt: str = "", history_enabled: bool = False):
+    def find_or_create_step(cls, session, iteration_workflow_id: int, unique_id: str, prompt: str, variables: str, step_type: str, output_type: str, completion_prompt: str = "", history_enabled: bool = False):
         workflow_step = session.query(IterationWorkflowStep).filter(IterationWorkflowStep.unique_id == unique_id).first()
         if workflow_step is None:
             workflow_step = IterationWorkflowStep(unique_id=unique_id)

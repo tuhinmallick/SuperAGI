@@ -18,15 +18,12 @@ class VectorEmbeddingFactory:
         Returns:
             The vector storage object
         """
-        final_chunks = []
         uuid = []
         embeds = []
         metadata = []
         vector_store = VectorStoreType.get_vector_store_type(vector_store)
         if chunk_json is not None:
-            for key in chunk_json.keys():
-                final_chunks.append(chunk_json[key])
-
+            final_chunks = [chunk_json[key] for key in chunk_json.keys()]
             for i in range(0, len(final_chunks)):
                 uuid.append(final_chunks[i]["id"])
                 embeds.append(final_chunks[i]["embeds"])
@@ -42,6 +39,6 @@ class VectorEmbeddingFactory:
 
         if vector_store == VectorStoreType.QDRANT:
             return Qdrant(uuid, embeds, metadata)
-        
+
         if vector_store == VectorStoreType.WEAVIATE:
             return Weaviate(uuid, embeds, metadata)

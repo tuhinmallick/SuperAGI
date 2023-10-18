@@ -43,9 +43,7 @@ class ToolBuilder:
         Returns:
             str: The validated filename.
         """
-        if filename.endswith(".py"):
-            return filename[:-3]  # Remove the last three characters (i.e., ".py")
-        return filename
+        return filename[:-3] if filename.endswith(".py") else filename
 
     def build_tool(self, tool: Tool):
         """
@@ -59,12 +57,17 @@ class ToolBuilder:
         """
         file_name = self.__validate_filename(filename=tool.file_name)
 
-        tools_dir=""
         tool_paths = ["superagi/tools", "superagi/tools/external_tools", "superagi/tools/marketplace_tools"]
-        for tool_path in tool_paths:
-            if os.path.exists(os.path.join(os.getcwd(), tool_path) + '/' + tool.folder_name):
-                tools_dir = tool_path
-                break
+        tools_dir = next(
+            (
+                tool_path
+                for tool_path in tool_paths
+                if os.path.exists(
+                    f'{os.path.join(os.getcwd(), tool_path)}/{tool.folder_name}'
+                )
+            ),
+            "",
+        )
         parsed_tools_dir = tools_dir.rstrip("/")
         module_name = ".".join(parsed_tools_dir.split("/") + [tool.folder_name, file_name])
 
@@ -101,8 +104,11 @@ class ToolBuilder:
             tool.goals = agent_execution_config["goal"]
         if hasattr(tool, 'instructions'):
             tool.instructions = agent_execution_config["instruction"]
-        if hasattr(tool, 'llm') and (agent_config["model"] == "gpt4" or agent_config[
-            "model"] == "gpt-3.5-turbo") and tool.name != "QueryResource":
+        if (
+            hasattr(tool, 'llm')
+            and agent_config["model"] in ["gpt4", "gpt-3.5-turbo"]
+            and tool.name != "QueryResource"
+        ):
             tool.llm = get_model(model="gpt-3.5-turbo", api_key=model_api_key, organisation_id=organisation.id , temperature=0.4)
         elif hasattr(tool, 'llm'):
             tool.llm = get_model(model=agent_config["model"], api_key=model_api_key, organisation_id=organisation.id, temperature=0.4)

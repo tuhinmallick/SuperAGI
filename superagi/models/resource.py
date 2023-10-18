@@ -61,8 +61,11 @@ class Resource(DBBaseModel):
     
     @classmethod
     def find_by_run_ids(cls, session, run_ids: list):
-        db_resources_arr=session.query(Resource).filter(Resource.agent_execution_id.in_(run_ids)).all()
-        return db_resources_arr
+        return (
+            session.query(Resource)
+            .filter(Resource.agent_execution_id.in_(run_ids))
+            .all()
+        )
     
 class InvalidResourceType(Exception):
     """Custom exception for invalid resource type"""

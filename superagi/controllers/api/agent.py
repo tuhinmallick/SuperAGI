@@ -258,22 +258,21 @@ def get_agent_runs(agent_id:int,filter_config:RunFilterConfigIn,api_key: str = S
     agent= Agent.get_active_agent_by_id(db.session, agent_id)
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
-    
+
     project=Project.find_by_id(db.session, agent.project_id)
     if project.organisation_id!=organisation.id:
         raise HTTPException(status_code=404, detail="Agent not found")
-    
+
     db_execution_arr=[]
     if filter_config.run_status_filter is not None:
         filter_config.run_status_filter=filter_config.run_status_filter.upper()
 
     db_execution_arr=AgentExecution.get_all_executions_by_filter_config(db.session, agent.id, filter_config)
-    
-    response_arr=[]
-    for ind_execution in db_execution_arr:
-        response_arr.append({"run_id":ind_execution.id, "status":ind_execution.status})
 
-    return response_arr
+    return [
+        {"run_id": ind_execution.id, "status": ind_execution.status}
+        for ind_execution in db_execution_arr
+    ]
 
 
 @router.post("/{agent_id}/pause",status_code=200)
@@ -346,14 +345,13 @@ def get_run_resources(run_id_config:RunIDConfig,api_key: str = Security(validate
         raise HTTPException(status_code=400,detail="This endpoint only works when S3 is configured")
     run_ids_arr=run_id_config.run_ids
     if len(run_ids_arr)==0:  
-        raise HTTPException(status_code=404,
-                            detail=f"No execution_id found")
+        raise HTTPException(status_code=404, detail="No execution_id found")
     #Checking if the run_ids whose output files are requested belong to the organisation 
     try:
         AgentExecution.validate_run_ids(db.session, run_ids_arr, organisation.id)
     except Exception as e:
         raise HTTPException(status_code=404, detail="One or more run id(s) not found")
-    
+
     db_resources_arr=Resource.find_by_run_ids(db.session, run_ids_arr)
 
     try:

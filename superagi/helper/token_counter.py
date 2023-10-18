@@ -59,11 +59,9 @@ class TokenCounter:
             logger.warning("Warning: model not found. Using cl100k_base encoding.")
             encoding = tiktoken.get_encoding("cl100k_base")
 
-        if model in model_token_per_message_dict.keys():
-            tokens_per_message = model_token_per_message_dict[model]
-        else:
-            tokens_per_message = default_tokens_per_message
-
+        tokens_per_message = model_token_per_message_dict.get(
+            model, default_tokens_per_message
+        )
         if tokens_per_message is None:
             raise NotImplementedError(
                 f"num_tokens_from_messages() is not implemented for model {model}.\n"
@@ -94,5 +92,4 @@ class TokenCounter:
             int: The number of tokens in the text.
         """
         encoding = tiktoken.get_encoding("cl100k_base")
-        num_tokens = len(encoding.encode(message)) + 4
-        return num_tokens
+        return len(encoding.encode(message)) + 4

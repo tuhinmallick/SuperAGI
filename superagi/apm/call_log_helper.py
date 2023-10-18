@@ -60,22 +60,26 @@ class CallLogHelper:
             toolkit_ids_allowed = self.session.query(Toolkit.id).filter(Toolkit.organisation_id == self.organisation_id).all()
             toolkit_ids_allowed = [toolkit_id[0] for toolkit_id in toolkit_ids_allowed]
             tools = self.session.query(Tool).filter(Tool.name.in_(tools_used), Tool.toolkit_id.in_(toolkit_ids_allowed))\
-                .all()
+                    .all()
             tools_name_toolkit_id_map = {tool.name: tool.toolkit_id for tool in tools}
 
             for run in runs:
-                model_data['runs'].append({
-                    'id': run.id,
-                    'agent_execution_name': run.agent_execution_name,
-                    'agent_id': run.agent_id,
-                    'agent_name': agent_id_name_map[run.agent_id] if run.agent_id in agent_id_name_map else None,
-                    'tokens_consumed': run.tokens_consumed,
-                    'tool_used': run.tool_used,
-                    'toolkit_name': tools_name_toolkit_id_map[run.tool_used] if run.tool_used in tools_name_toolkit_id_map else None,
-                    'org_id': run.org_id,
-                    'created_at': run.created_at,
-                    'updated_at': run.updated_at,
-                })
+                model_data['runs'].append(
+                    {
+                        'id': run.id,
+                        'agent_execution_name': run.agent_execution_name,
+                        'agent_id': run.agent_id,
+                        'agent_name': agent_id_name_map.get(run.agent_id, None),
+                        'tokens_consumed': run.tokens_consumed,
+                        'tool_used': run.tool_used,
+                        'toolkit_name': tools_name_toolkit_id_map.get(
+                            run.tool_used, None
+                        ),
+                        'org_id': run.org_id,
+                        'created_at': run.created_at,
+                        'updated_at': run.updated_at,
+                    }
+                )
 
             model_data['runs'] = model_data['runs'][::-1]
 

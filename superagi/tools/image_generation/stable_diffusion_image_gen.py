@@ -57,10 +57,7 @@ class StableDiffusionImageGenTool(BaseTool):
         data = response.json()
 
         artifacts = data['artifacts']
-        base64_strings = []
-        for artifact in artifacts:
-            base64_strings.append(artifact['base64'])
-
+        base64_strings = [artifact['base64'] for artifact in artifacts]
         for i in range(num):
             image_base64 = base64_strings[i]
             img_data = base64.b64decode(image_base64)
@@ -71,21 +68,19 @@ class StableDiffusionImageGenTool(BaseTool):
 
             self.resource_manager.write_binary_file(image_names[i], img_byte_arr.getvalue())
 
-        return f"Images downloaded and saved successfully!!"
+        return "Images downloaded and saved successfully!!"
 
     def call_stable_diffusion(self, api_key, width, height, num, prompt, steps):
         engine_id = self.get_tool_config("ENGINE_ID")
         if "768" in engine_id:
-            if height < 768:
-                height = 768
-            if width < 768:
-                width = 768
-        response = requests.post(
+            height = max(height, 768)
+            width = max(width, 768)
+        return requests.post(
             f"https://api.stability.ai/v1/generation/{engine_id}/text-to-image",
             headers={
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                "Authorization": f"Bearer {api_key}"
+                "Authorization": f"Bearer {api_key}",
             },
             json={
                 "text_prompts": [{"text": prompt}],
@@ -95,4 +90,3 @@ class StableDiffusionImageGenTool(BaseTool):
                 "steps": steps,
             },
         )
-        return response

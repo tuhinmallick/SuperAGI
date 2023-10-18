@@ -46,16 +46,14 @@ class AgentExecutionConfiguration(DBBaseModel):
             for key, value in agent_execution_configs.items()
         ]
         for agent_execution in agent_execution_configurations:
-            agent_execution_config = (
+            if agent_execution_config := (
                 session.query(AgentExecutionConfiguration)
                 .filter(
                     AgentExecutionConfiguration.agent_execution_id == execution.id,
-                    AgentExecutionConfiguration.key == agent_execution.key
+                    AgentExecutionConfiguration.key == agent_execution.key,
                 )
                 .first()
-            )
-
-            if agent_execution_config:
+            ):
                 agent_execution_config.value = str(agent_execution.value)
             else:
                 agent_execution_config = AgentExecutionConfiguration(
@@ -106,7 +104,7 @@ class AgentExecutionConfiguration(DBBaseModel):
 
         """
 
-        if key == "goal" or key == "instruction" or key == "tools":
+        if key in ["goal", "instruction", "tools"]:
             return eval(value)
 
     @classmethod

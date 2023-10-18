@@ -126,23 +126,19 @@ class Pinecone(VectorStore):
 
     def _build_documents(self, results: List[dict]):
         try:
-            documents = []
-            for doc in results['matches']:
-                documents.append(
-                    Document(
-                        text_content=doc['metadata'][self.text_field],
-                        metadata=doc['metadata'],
-                    )
+            return [
+                Document(
+                    text_content=doc['metadata'][self.text_field],
+                    metadata=doc['metadata'],
                 )
-            return documents
+                for doc in results['matches']
+            ]
         except Exception as err:
             raise err
 
     def _get_search_text(self, results: List[dict], query: str):
         contexts = [item['metadata']['text'] for item in results['matches']]
-        i = 0
         search_res = f"Query: {query}\n"
-        for context in contexts:
+        for i, context in enumerate(contexts):
             search_res += f"Chunk{i}: \n{context}\n"
-            i += 1
         return search_res
