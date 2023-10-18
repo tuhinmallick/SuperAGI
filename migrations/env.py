@@ -55,7 +55,7 @@ def run_migrations_offline() -> None:
             db_url = f'postgresql://{db_username}:{db_password}@{db_host}/{db_name}'
     else:
         db_url = urlparse(db_url)
-        db_url = db_url.scheme + "://" + db_url.netloc + db_url.path
+        db_url = f"{db_url.scheme}://{db_url.netloc}{db_url.path}"
 
     config.set_main_option("sqlalchemy.url", db_url)
 
@@ -92,8 +92,8 @@ def run_migrations_online() -> None:
             db_url = f'postgresql://{db_username}:{db_password}@{db_host}/{db_name}'
     else:
         db_url = urlparse(db_url)
-        db_url = db_url.scheme + "://" + db_url.netloc + db_url.path
-        
+        db_url = f"{db_url.scheme}://{db_url.netloc}{db_url.path}"
+
     config.set_main_option('sqlalchemy.url', db_url)
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),

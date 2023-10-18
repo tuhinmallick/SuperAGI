@@ -112,17 +112,17 @@ class InstagramTool(BaseTool):
         caption_prompt ="""Generate an instagram post caption for the following text `{photo_description}`
             Attempt to make it as relevant as possible to the description and should be different and unique everytime. Add relevant emojis and hashtags."""
 
-        caption_prompt = caption_prompt.replace("{photo_description}", str(photo_description))
+        caption_prompt = caption_prompt.replace(
+            "{photo_description}", photo_description
+        )
 
         messages = [{"role": "system", "content": caption_prompt}]
         result = self.llm.chat_completion(messages, max_tokens=self.max_token_limit)
         if 'error' in result and result['message'] is not None:
             ErrorHandler.handle_openai_errors(self.toolkit_config.session, self.agent_id, self.agent_execution_id, result['message'])
         caption=result["content"]
-        
-        encoded_caption=urllib. parse. quote(caption)     
 
-        return encoded_caption
+        return urllib. parse. quote(caption)
     
     def get_file_path(self, session, file_name, agent_id, agent_execution_id):
         """
@@ -135,11 +135,13 @@ class InstagramTool(BaseTool):
             The path of the image file
         """
         
-        final_path = ResourceHelper().get_agent_read_resource_path(file_name,
-                                                                    agent=Agent.get_agent_from_id(session, agent_id),
-                                                                    agent_execution=AgentExecution.get_agent_execution_from_id(
-                                                                  session, agent_execution_id))
-        return final_path
+        return ResourceHelper().get_agent_read_resource_path(
+            file_name,
+            agent=Agent.get_agent_from_id(session, agent_id),
+            agent_execution=AgentExecution.get_agent_execution_from_id(
+                session, agent_execution_id
+            ),
+        )
         
     def get_img_public_url(self,filename,content):
         """
@@ -156,8 +158,7 @@ class InstagramTool(BaseTool):
         bucket_name = get_config("INSTAGRAM_TOOL_BUCKET_NAME")
         object_key=f"instagram_upload_images/{filename}"
         S3Helper(get_config("INSTAGRAM_TOOL_BUCKET_NAME")).upload_file_content(content, object_key)
-        image_url = f"https://{bucket_name}.s3.amazonaws.com/{object_key}"
-        return image_url
+        return f"https://{bucket_name}.s3.amazonaws.com/{object_key}"
 
     def get_img_url_and_encoded_caption(self,photo_description,file_path,filename):
 
@@ -174,27 +175,15 @@ class InstagramTool(BaseTool):
 
     def get_req_insta_id(self,root_api_url,facebook_page_id,meta_user_access_token):
         url_to_get_acc_id=f"{root_api_url}{facebook_page_id}?fields=instagram_business_account&access_token={meta_user_access_token}"
-        response=requests.get(
-            url_to_get_acc_id
-        )
-
-        return response
+        return requests.get(url_to_get_acc_id)
     
     def post_media_container_id(self,root_api_url,insta_business_account_id,image_url,encoded_caption,meta_user_access_token):
         url_to_create_media_container=f"{root_api_url}{insta_business_account_id}/media?image_url={image_url}&caption={encoded_caption}&access_token={meta_user_access_token}"
-        response = requests.post(       
-            url_to_create_media_container
-        )
-
-        return response
+        return requests.post(url_to_create_media_container)
 
     def post_media(self,root_api_url,insta_business_account_id,container_ID,meta_user_access_token):
         url_to_post_media_container=f"{root_api_url}{insta_business_account_id}/media_publish?creation_id={container_ID}&access_token={meta_user_access_token}"
-        response = requests.post(
-            url_to_post_media_container
-        )
-
-        return response
+        return requests.post(url_to_post_media_container)
 
     def _get_image_content(self, file_path):
         if StorageType.get_storage_type(get_config("STORAGE_TYPE", StorageType.FILE.value)) == StorageType.S3:

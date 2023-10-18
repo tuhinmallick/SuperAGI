@@ -53,7 +53,7 @@ def test_replace_task_based_variables(mock_count_message_tokens):
     result = AgentPromptBuilder.replace_task_based_variables(super_agi_prompt, current_task, last_task, last_task_result,
                                                              pending_tasks, completed_tasks, token_limit)
 
-    expected_result = f"{current_task} {last_task} {last_task_result} {str(pending_tasks)} {str([x['task'] for x in completed_tasks])} \nTask: {completed_tasks[-1]['task']}\nResult: {completed_tasks[-1]['response']}\nTask: {completed_tasks[-2]['task']}\nResult: {completed_tasks[-2]['response']}\n"
+    expected_result = f"{current_task} {last_task} {last_task_result} {pending_tasks} {[x['task'] for x in completed_tasks]} \nTask: {completed_tasks[-1]['task']}\nResult: {completed_tasks[-1]['response']}\nTask: {completed_tasks[-2]['task']}\nResult: {completed_tasks[-2]['response']}\n"
 
     assert result == expected_result
 

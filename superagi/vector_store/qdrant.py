@@ -19,13 +19,11 @@ MetadataFilter = Union[DictFilter, common_types.Filter]
 
 def create_qdrant_client(api_key: Optional[str] = None, url: Optional[str] = None, port: Optional[int] = None
 ) -> QdrantClient:
-    if api_key is None:
-        qdrant_host_name = get_config("QDRANT_HOST_NAME") or "localhost"
-        qdrant_port = get_config("QDRANT_PORT") or 6333
-        qdrant_client = QdrantClient(host=qdrant_host_name, port=qdrant_port)
-    else:
-        qdrant_client = QdrantClient(api_key=api_key, url=url, port=port)
-    return qdrant_client
+    if api_key is not None:
+        return QdrantClient(api_key=api_key, url=url, port=port)
+    qdrant_host_name = get_config("QDRANT_HOST_NAME") or "localhost"
+    qdrant_port = get_config("QDRANT_PORT") or 6333
+    return QdrantClient(host=qdrant_host_name, port=qdrant_port)
 
 
 class Qdrant(VectorStore):
@@ -134,9 +132,7 @@ class Qdrant(VectorStore):
         if metadata is not None:
             filter_conditions = []
             for key, value in metadata.items():
-                metadata_filter = {}
-                metadata_filter["key"] = key
-                metadata_filter["match"] = {"value": value}
+                metadata_filter = {"key": key, "match": {"value": value}}
                 filter_conditions.append(metadata_filter)
             filter = models.Filter(
                 must = filter_conditions
@@ -204,14 +200,13 @@ class Qdrant(VectorStore):
             texts: Iterable[str]
     ) -> List[List[float]]:
         """Return embeddings for a list of texts using the embedding model."""
-        if self.embedding_model is not None:
-            query_vectors = []
-            for text in texts:
-                query_vector = self.embedding_model.get_embedding(text)
-                query_vectors.append(query_vector)
-        else:
+        if self.embedding_model is None:
             raise ValueError("Embedding model is not set")
-        
+
+        query_vectors = []
+        for text in texts:
+            query_vector = self.embedding_model.get_embedding(text)
+            query_vectors.append(query_vector)
         return query_vectors
     
     def __build_payloads(
@@ -247,16 +242,13 @@ class Qdrant(VectorStore):
             results: List[Dict]
     ) -> List[Document]:
         """Return the document version corresponding to each result."""
-        documents = []
-        for result in results:
-            documents.append(
-                Document(
-                    text_content=result.payload.get(self.text_field_payload_key),
-                    metadata=(result.payload.get(self.metadata_payload_key)) or {},
-                )
+        return [
+            Document(
+                text_content=result.payload.get(self.text_field_payload_key),
+                metadata=(result.payload.get(self.metadata_payload_key)) or {},
             )
-
-        return documents
+            for result in results
+        ]
     
     @classmethod
     def create_collection(cls,
@@ -272,7 +264,10 @@ class Qdrant(VectorStore):
             collection_name: The name of the collection to create.
             size: The size for the new collection.
         """
-        if not any(collection.name == collection_name for collection in client.get_collections().collections):
+        if all(
+            collection.name != collection_name
+            for collection in client.get_collections().collections
+        ):
             client.create_collection(
                 collection_name=collection_name,
                 vectors_config=VectorParams(size=size, distance=Distance.COSINE),
@@ -280,9 +275,7 @@ class Qdrant(VectorStore):
     
     def _get_search_res(self, results, text):
         contexts = [res.payload for res in results]
-        i = 0
         search_res = f"Query: {text}\n"
-        for context in contexts:
+        for i, context in enumerate(contexts):
             search_res += f"Chunk{i}: \n{context['text']}\n"
-            i += 1
         return search_res

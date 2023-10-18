@@ -87,9 +87,7 @@ class GithubHelper:
         url = f'https://api.github.com/repos/{repository_owner}/{repository_name}/contents/{file_path}'
         r = requests.get(url, headers=headers)
         r.raise_for_status()
-        data = r.json()
-
-        return data
+        return r.json()
 
     def sync_branch(self, repository_owner, repository_name, base_branch, head_branch, headers):
         """
@@ -320,10 +318,7 @@ class GithubHelper:
         pattern = r'^https?://(?:www\.)?github\.com/[\w\-]+/[\w\-]+$'
 
         # Check if the link matches the pattern
-        if re.match(pattern, link):
-            return True
-
-        return False
+        return bool(re.match(pattern, link))
 
     def _get_file_contents(self, file_name, agent_id, agent_execution_id, session):
         final_path = ResourceHelper().get_agent_read_resource_path(file_name,
@@ -462,10 +457,6 @@ class GithubHelper:
         response = requests.get(url, headers=headers)
 
         if response.status_code == 200:
-            pull_request_urls = []
-            for pull_request in response.json()['items']:
-                pull_request_urls.append(pull_request['html_url'])
-            return pull_request_urls
-        else:
-            logger.warning(f'Failed to fetch PRs: {response.json()["message"]}')
-            return []
+            return [pull_request['html_url'] for pull_request in response.json()['items']]
+        logger.warning(f'Failed to fetch PRs: {response.json()["message"]}')
+        return []

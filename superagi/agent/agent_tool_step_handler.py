@@ -101,7 +101,7 @@ class AgentToolStepHandler:
         logger.info("Prompt: ", prompt)
         agent_feeds = AgentExecutionFeed.fetch_agent_execution_feeds(self.session, self.agent_execution_id)
         messages = AgentLlmMessageBuilder(self.session, self.llm, self.llm.get_model(), self.agent_id, self.agent_execution_id) \
-            .build_agent_messages(prompt, agent_feeds, history_enabled=step_tool.history_enabled,
+                .build_agent_messages(prompt, agent_feeds, history_enabled=step_tool.history_enabled,
                                   completion_prompt=step_tool.completion_prompt)
         # print(messages)
         current_tokens = TokenCounter.count_message_tokens(messages, self.llm.get_model())
@@ -111,11 +111,10 @@ class AgentToolStepHandler:
             ErrorHandler.handle_openai_errors(self.session, self.agent_id, self.agent_execution_id, response['message'])
         # ModelsHelper(session=self.session, organisation_id=organisation.id).create_call_log(execution.name,agent_config['agent_id'],response['response'].usage.total_tokens,json.loads(response['content'])['tool']['name'],agent_config['model'])
         if 'content' not in response or response['content'] is None:
-            raise RuntimeError(f"Failed to get response from llm")
+            raise RuntimeError("Failed to get response from llm")
         total_tokens = current_tokens + TokenCounter.count_message_tokens(response, self.llm.get_model())
         AgentExecution.update_tokens(self.session, self.agent_execution_id, total_tokens)
-        assistant_reply = response['content']
-        return assistant_reply
+        return response['content']
 
     def _build_tool_obj(self, agent_config, agent_execution_config, tool_name: str):
         model_api_key = AgentConfiguration.get_model_api_key(self.session, self.agent_id, agent_config["model"])['api_key']
@@ -144,14 +143,15 @@ class AgentToolStepHandler:
 
         if 'error' in response and response['message'] is not None:
             ErrorHandler.handle_openai_errors(self.session, self.agent_id, self.agent_execution_id, response['message'])
-            
+
         if 'content' not in response or response['content'] is None:
-            raise RuntimeError(f"ToolWorkflowStepHandler: Failed to get output response from llm")
+            raise RuntimeError(
+                "ToolWorkflowStepHandler: Failed to get output response from llm"
+            )
         total_tokens = current_tokens + TokenCounter.count_message_tokens(response, self.llm.get_model())
         AgentExecution.update_tokens(self.session, self.agent_execution_id, total_tokens)
         step_response = response['content']
-        step_response = step_response.replace("'", "").replace("\"", "")
-        return step_response
+        return step_response.replace("'", "").replace("\"", "")
 
     def _build_tool_input_prompt(self, step_tool: AgentWorkflowStepTool, tool: BaseTool, agent_execution_config: dict):
         super_agi_prompt = PromptReader.read_agent_prompt(__file__, "agent_tool_input.txt")
@@ -202,7 +202,7 @@ class AgentToolStepHandler:
             next_step = AgentWorkflowStep.fetch_next_step(self.session, workflow_step.id, "YES")
         else:
             next_step = AgentWorkflowStep.fetch_next_step(self.session, workflow_step.id, "NO")
-            result = f"{' User has given the following feedback : ' + agent_execution_permission.user_feedback if agent_execution_permission.user_feedback else ''}"
+            result = f"{f' User has given the following feedback : {agent_execution_permission.user_feedback}' if agent_execution_permission.user_feedback else ''}"
 
 
             agent_execution_feed = AgentExecutionFeed(agent_execution_id=agent_execution_permission.agent_execution_id,

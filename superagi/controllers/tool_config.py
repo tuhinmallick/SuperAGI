@@ -57,8 +57,11 @@ def update_tool_config(toolkit_name: str, configs: list, organisation: Organisat
             if value is None: 
                 continue
             if key is not None:
-                tool_config = db.session.query(ToolConfig).filter_by(toolkit_id=toolkit.id, key=key).first()
-                if tool_config:
+                if (
+                    tool_config := db.session.query(ToolConfig)
+                    .filter_by(toolkit_id=toolkit.id, key=key)
+                    .first()
+                ):
                     if tool_config.key_type ==  ToolConfigKeyType.FILE.value:
                         value = json.dumps(value)
                     # Update existing tool config

@@ -77,7 +77,7 @@ class GithubReviewPullRequest(BaseTool):
             for content in pull_request_arr_parts:
                 self.run_code_review(github_helper, content, latest_commit_id, organisation, pull_request_number,
                                      repository_name, repository_owner)
-            return "Added comments to the pull request:" + str(pull_request_number)
+            return f"Added comments to the pull request:{pull_request_number}"
         except Exception as err:
             return f"Error: Unable to add comments to the pull request {err}"
 
@@ -116,9 +116,9 @@ class GithubReviewPullRequest(BaseTool):
             if total_tokens >= model_token_limit * 0.6:
                 # Add the current part to pull_request_arr_parts and reset current_sum and current_part
                 pull_request_arr_parts.append(current_part)
-                current_part = "diff --git" + part
+                current_part = f"diff --git{part}"
             else:
-                current_part += "diff --git" + part
+                current_part += f"diff --git{part}"
 
         pull_request_arr_parts.append(current_part)
         return pull_request_arr_parts

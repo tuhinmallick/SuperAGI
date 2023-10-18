@@ -27,7 +27,7 @@ class QueueStepHandler:
         self.organisation = Agent.find_org_by_agent_id(self.session, agent_id=self.agent_id)
 
     def _queue_identifier(self, step_tool):
-        return step_tool.unique_id + "_" + str(self.agent_execution_id)
+        return f"{step_tool.unique_id}_{str(self.agent_execution_id)}"
 
     def _build_task_queue(self, step_tool):
         return TaskQueue(self._queue_identifier(step_tool))
@@ -62,13 +62,15 @@ class QueueStepHandler:
         if tasks:
             task = task_queue.get_first_task()
             # generating the new feed group id
-            agent_execution.current_feed_group_id = "GROUP_" + str(int(time.time()))
+            agent_execution.current_feed_group_id = f"GROUP_{int(time.time())}"
             self.session.commit()
-            task_response_feed = AgentExecutionFeed(agent_execution_id=self.agent_execution_id,
-                                                    agent_id=self.agent_id,
-                                                    feed="Input: " + task,
-                                                    role="assistant",
-                                                    feed_group_id=agent_execution.current_feed_group_id)
+            task_response_feed = AgentExecutionFeed(
+                agent_execution_id=self.agent_execution_id,
+                agent_id=self.agent_id,
+                feed=f"Input: {task}",
+                role="assistant",
+                feed_group_id=agent_execution.current_feed_group_id,
+            )
             self.session.add(task_response_feed)
             self.session.commit()
             task_queue.complete_task("PROCESSED")
@@ -87,20 +89,19 @@ class QueueStepHandler:
         agent_feeds = AgentExecutionFeed.fetch_agent_execution_feeds(self.session, self.agent_execution_id)
         print(".........//////////////..........2")
         messages = AgentLlmMessageBuilder(self.session, self.llm, self.llm.get_model(), self.agent_id, self.agent_execution_id) \
-            .build_agent_messages(prompt, agent_feeds, history_enabled=step_tool.history_enabled,
+                .build_agent_messages(prompt, agent_feeds, history_enabled=step_tool.history_enabled,
                                   completion_prompt=step_tool.completion_prompt)
         current_tokens = TokenCounter.count_message_tokens(messages, self.llm.get_model())
         response = self.llm.chat_completion(messages, TokenCounter(session=self.session, organisation_id=self.organisation.id).token_limit(self.llm.get_model()) - current_tokens)
-        
+
         if 'error' in response and response['message'] is not None:
             ErrorHandler.handle_openai_errors(self.session, self.agent_id, self.agent_execution_id, response['message'])
-            
+
         if 'content' not in response or response['content'] is None:
-            raise RuntimeError(f"Failed to get response from llm")
+            raise RuntimeError("Failed to get response from llm")
         total_tokens = current_tokens + TokenCounter.count_message_tokens(response, self.llm.get_model())
         AgentExecution.update_tokens(self.session, self.agent_execution_id, total_tokens)
-        assistant_reply = response['content']
-        return assistant_reply
+        return response['content']
 
     def _build_queue_input_prompt(self, step_tool: AgentWorkflowStepTool):
         queue_input_prompt = PromptReader.read_agent_prompt(__file__, "agent_queue_input.txt")

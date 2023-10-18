@@ -56,12 +56,11 @@ class Models(DBBaseModel):
     def fetch_marketplace_list(cls, page):
         headers = {'Content-Type': 'application/json'}
         response = requests.get(
-            marketplace_url + f"/models_controller/marketplace/list/{str(page)}",
-            headers=headers, timeout=10)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return []
+            f"{marketplace_url}/models_controller/marketplace/list/{str(page)}",
+            headers=headers,
+            timeout=10,
+        )
+        return response.json() if response.status_code == 200 else []
 
     @classmethod
     def get_model_install_details(cls, session, marketplace_models, organisation_id, type=ModelsTypes.CUSTOM.value):
@@ -87,13 +86,11 @@ class Models(DBBaseModel):
     @classmethod
     def fetch_model_tokens(cls, session, organisation_id) -> Dict[str, int]:
         try:
-            models = session.query(
-                Models.model_name, Models.token_limit
-            ).filter(
-                Models.org_id == organisation_id
-            ).all()
-
-            if models:
+            if (
+                models := session.query(Models.model_name, Models.token_limit)
+                .filter(Models.org_id == organisation_id)
+                .all()
+            ):
                 return dict(models)
             else:
                 return {"error": "No models found for the given organisation ID."}
@@ -114,9 +111,13 @@ class Models(DBBaseModel):
         if not token_limit:
             return {"error": "Token Limit is null or undefined or 0"}
 
-        # Check if model_name already exists in the database
-        existing_model = session.query(Models).filter(Models.model_name == model_name, Models.org_id == organisation_id).first()
-        if existing_model:
+        if (
+            existing_model := session.query(Models)
+            .filter(
+                Models.model_name == model_name, Models.org_id == organisation_id
+            )
+            .first()
+        ):
             return {"error": "Model Name already exists"}
 
         # Get the provider of the model
@@ -168,9 +169,8 @@ class Models(DBBaseModel):
 
                 if configurations is None:
                     return {"error": "API Key is Missing"}
-                else:
-                    model_api_key = decrypt_data(configurations.value)
-                    model_details = ModelsConfig.store_api_key(session, organisation_id, "OpenAI", model_api_key)
+                model_api_key = decrypt_data(configurations.value)
+                model_details = ModelsConfig.store_api_key(session, organisation_id, "OpenAI", model_api_key)
         except Exception as e:
             logging.error(f"Exception has been raised while checking API Key:: {e}")
 
@@ -185,15 +185,15 @@ class Models(DBBaseModel):
                 ModelsConfig, Models.model_provider_id == ModelsConfig.id).filter(
                 Models.org_id == organisation_id).all()
 
-            result = []
-            for model in models:
-                result.append({
+            result = [
+                {
                     "id": model[0],
                     "name": model[1],
                     "description": model[2],
-                    "model_provider": model[3]
-                })
-
+                    "model_provider": model[3],
+                }
+                for model in models
+            ]
         except Exception as e:
             logging.error(f"Unexpected Error Occurred: {e}")
             return {"error": "Unexpected Error Occurred"}
@@ -204,16 +204,22 @@ class Models(DBBaseModel):
     def fetch_model_details(cls, session, organisation_id, model_id: int) -> Dict[str, Union[str, int]]:
         try:
             from superagi.models.models_config import ModelsConfig
-            model = session.query(
-                Models.id, Models.model_name, Models.description, Models.end_point, Models.token_limit, Models.type,
-                ModelsConfig.provider,
-            ).join(
-                ModelsConfig, Models.model_provider_id == ModelsConfig.id
-            ).filter(
-                and_(Models.org_id == organisation_id, Models.id == model_id)
-            ).first()
-
-            if model:
+            if (
+                model := session.query(
+                    Models.id,
+                    Models.model_name,
+                    Models.description,
+                    Models.end_point,
+                    Models.token_limit,
+                    Models.type,
+                    ModelsConfig.provider,
+                )
+                .join(ModelsConfig, Models.model_provider_id == ModelsConfig.id)
+                .filter(
+                    and_(Models.org_id == organisation_id, Models.id == model_id)
+                )
+                .first()
+            ):
                 return {
                     "id": model[0],
                     "name": model[1],

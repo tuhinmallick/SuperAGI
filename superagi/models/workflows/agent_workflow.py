@@ -89,9 +89,14 @@ class AgentWorkflow(DBBaseModel):
             int: The ID of the trigger step.
 
         """
-        trigger_step = session.query(AgentWorkflowStep).filter(AgentWorkflowStep.agent_workflow_id == workflow_id,
-                                                               AgentWorkflowStep.step_type == 'TRIGGER').first()
-        return trigger_step
+        return (
+            session.query(AgentWorkflowStep)
+            .filter(
+                AgentWorkflowStep.agent_workflow_id == workflow_id,
+                AgentWorkflowStep.step_type == 'TRIGGER',
+            )
+            .first()
+        )
 
     @classmethod
     def find_by_id(cls, session, id: int):

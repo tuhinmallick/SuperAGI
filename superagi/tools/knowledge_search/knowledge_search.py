@@ -50,7 +50,7 @@ class KnowledgeSearchTool(BaseTool):
         try:
             if vector_db_index.state == "Custom":
                 filters = None
-            if vector_db_index.state == "Marketplace":
+            elif vector_db_index.state == "Marketplace":
                 filters = {"knowledge_name": knowledge.name}
             vector_db_storage = VectorFactory.build_vector_storage(vector_db.db_type, vector_db_index.name, embedding_model, **db_creds)
             search_result = vector_db_storage.get_matching_text(query, metadata=filters)

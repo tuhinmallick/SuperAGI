@@ -32,7 +32,7 @@ def connect_db():
             db_url = f'postgresql://{db_username}:{db_password}@{db_host}/{db_name}'
     else:
         db_url = urlparse(db_url)
-        db_url = db_url.scheme + "://" + db_url.netloc + db_url.path
+        db_url = f"{db_url.scheme}://{db_url.netloc}{db_url.path}"
     # Create the SQLAlchemy engine
     engine = create_engine(db_url,
                            pool_size=20,  # Maximum number of database connections in the pool
@@ -45,7 +45,7 @@ def connect_db():
     # Test the connection
     try:
         connection = engine.connect()
-        logger.info("Connected to the database! @ " + db_url)
+        logger.info(f"Connected to the database! @ {db_url}")
         connection.close()
     except Exception as e:
         logger.error(f"Unable to connect to the database:{e}")

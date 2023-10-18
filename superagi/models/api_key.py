@@ -20,13 +20,25 @@ class ApiKey(DBBaseModel):
 
     @classmethod
     def get_by_org_id(cls, session, org_id: int):
-        db_api_keys=session.query(ApiKey).filter(ApiKey.org_id==org_id,or_(ApiKey.is_expired == False, ApiKey.is_expired == None)).all()
-        return db_api_keys
+        return (
+            session.query(ApiKey)
+            .filter(
+                ApiKey.org_id == org_id,
+                or_(ApiKey.is_expired == False, ApiKey.is_expired is None),
+            )
+            .all()
+        )
 
     @classmethod
     def get_by_id(cls, session, id: int):
-        db_api_key=session.query(ApiKey).filter(ApiKey.id==id,or_(ApiKey.is_expired == False, ApiKey.is_expired == None)).first()
-        return db_api_key
+        return (
+            session.query(ApiKey)
+            .filter(
+                ApiKey.id == id,
+                or_(ApiKey.is_expired == False, ApiKey.is_expired is None),
+            )
+            .first()
+        )
 
     @classmethod
     def delete_by_id(cls, session,id: int):

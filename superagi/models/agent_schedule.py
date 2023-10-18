@@ -67,5 +67,8 @@ class AgentSchedule(DBBaseModel):
     
     @classmethod
     def find_by_agent_id(cls, session, agent_id: int):
-        db_schedule=session.query(AgentSchedule).filter(AgentSchedule.agent_id == agent_id).first()
-        return db_schedule
+        return (
+            session.query(AgentSchedule)
+            .filter(AgentSchedule.agent_id == agent_id)
+            .first()
+        )

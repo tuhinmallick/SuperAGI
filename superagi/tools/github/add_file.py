@@ -83,7 +83,7 @@ class GithubAddFileTool(BaseTool):
                                                    head_branch, base_branch, headers, commit_message, self.agent_id, self.agent_execution_id, session)
             pr_response = github_helper.create_pull_request(repository_owner, repository_name, head_branch, base_branch,
                                                             headers)
-            if (pr_response == 201 or pr_response == 422) and (file_response == 201 or file_response == 422):
+            if pr_response in [201, 422] and file_response in [201, 422]:
                 return "Pull request to add file/folder has been created"
             else:
                 return "Error while adding file."

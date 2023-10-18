@@ -16,7 +16,4 @@ class ToolResponseQueryManager:
         if self.memory is None:
             return ""
         documents = self.memory.get_matching_text(query, metadata=metadata)
-        relevant_responses = ""
-        for document in documents["documents"]:
-            relevant_responses += document.text_content
-        return relevant_responses
+        return "".join(document.text_content for document in documents["documents"])

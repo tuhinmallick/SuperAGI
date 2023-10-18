@@ -77,16 +77,28 @@ class OpenAi(BaseLlm):
             return {"response": response, "content": content}
         except AuthenticationError as auth_error:
             logger.info("OpenAi AuthenticationError:", auth_error)
-            return {"error": "ERROR_AUTHENTICATION", "message": "Authentication error please check the api keys: "+str(auth_error)}
+            return {
+                "error": "ERROR_AUTHENTICATION",
+                "message": f"Authentication error please check the api keys: {str(auth_error)}",
+            }
         except RateLimitError as api_error:
             logger.info("OpenAi RateLimitError:", api_error)
-            return {"error": "ERROR_RATE_LIMIT", "message": "Openai rate limit exceeded: "+str(api_error)}
+            return {
+                "error": "ERROR_RATE_LIMIT",
+                "message": f"Openai rate limit exceeded: {str(api_error)}",
+            }
         except InvalidRequestError as invalid_request_error:
             logger.info("OpenAi InvalidRequestError:", invalid_request_error)
-            return {"error": "ERROR_INVALID_REQUEST", "message": "Openai invalid request error: "+str(invalid_request_error)}
+            return {
+                "error": "ERROR_INVALID_REQUEST",
+                "message": f"Openai invalid request error: {str(invalid_request_error)}",
+            }
         except Exception as exception:
             logger.info("OpenAi Exception:", exception)
-            return {"error": "ERROR_OPENAI", "message": "Open ai exception: "+str(exception)}
+            return {
+                "error": "ERROR_OPENAI",
+                "message": f"Open ai exception: {str(exception)}",
+            }
 
     def verify_access_key(self):
         """
@@ -113,8 +125,7 @@ class OpenAi(BaseLlm):
             models = openai.Model.list()
             models = [model["id"] for model in models["data"]]
             models_supported = ['gpt-4', 'gpt-3.5-turbo', 'gpt-3.5-turbo-16k', 'gpt-4-32k']
-            models = [model for model in models if model in models_supported]
-            return models
+            return [model for model in models if model in models_supported]
         except Exception as exception:
             logger.info("OpenAi Exception:", exception)
             return []

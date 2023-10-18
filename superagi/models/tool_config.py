@@ -63,8 +63,11 @@ class ToolConfig(DBBaseModel):
 
     @staticmethod
     def add_or_update(session: Session, toolkit_id: int, key: str, value: str = None, key_type: str = None, is_secret: bool = False, is_required: bool = False):
-        tool_config = session.query(ToolConfig).filter_by(toolkit_id=toolkit_id, key=key).first()
-        if tool_config:
+        if (
+            tool_config := session.query(ToolConfig)
+            .filter_by(toolkit_id=toolkit_id, key=key)
+            .first()
+        ):
             # Update existing tool config
             if value is not None:
                 tool_config.value = (value)
@@ -95,7 +98,7 @@ class ToolConfig(DBBaseModel):
             if key_type is None:
                 key_type = ToolConfigKeyType.STRING.value
             if isinstance(key_type,ToolConfigKeyType):
-                key_type = key_type.value    
+                key_type = key_type.value
             tool_config = ToolConfig(toolkit_id=toolkit_id, key=key, value=value, key_type=key_type, is_secret=is_secret, is_required=is_required)
             session.add(tool_config)
 

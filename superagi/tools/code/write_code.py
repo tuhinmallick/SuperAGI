@@ -79,7 +79,7 @@ class CodingTool(BaseTool):
         token_limit = TokenCounter(session=self.toolkit_config.session, organisation_id=organisation.id).token_limit(self.llm.get_model())
 
         result = self.llm.chat_completion(messages, max_tokens=(token_limit - total_tokens - 100))
-        
+
         if 'error' in result and result['message'] is not None:
             ErrorHandler.handle_openai_errors(self.toolkit_config.session, self.agent_id, self.agent_execution_id, result['message'])
 
@@ -108,9 +108,7 @@ class CodingTool(BaseTool):
             if save_result.startswith("Error"):
                 return save_result
 
-        # Get README contents and save
-        split_result = result["content"].split("```")
-        if split_result:
+        if split_result := result["content"].split("```"):
             readme = split_result[0]
             save_readme_result = self.resource_manager.write_file("README.md", readme)
             if save_readme_result.startswith("Error"):

@@ -11,10 +11,7 @@ class AgentPromptTemplate:
 
     @staticmethod
     def add_list_items_to_string(items: List[str]) -> str:
-        list_string = ""
-        for i, item in enumerate(items):
-            list_string += f"{i + 1}. {item}\n"
-        return list_string
+        return "".join(f"{i + 1}. {item}\n" for i, item in enumerate(items))
 
     @classmethod
     def clean_prompt(cls, prompt):

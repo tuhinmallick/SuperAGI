@@ -114,11 +114,11 @@ def get_models_list(page: int = 0, organisation=Depends(get_user_organisation)):
         dict: The response containing the marketplace list.
 
     """
-    if page < 0:
-        page = 0
+    page = max(page, 0)
     marketplace_models = Models.fetch_marketplace_list(page)
-    marketplace_models_with_install = Models.get_model_install_details(db.session, marketplace_models, organisation.id)
-    return marketplace_models_with_install
+    return Models.get_model_install_details(
+        db.session, marketplace_models, organisation.id
+    )
 
 
 @router.get("/marketplace/list/{page}", status_code=200)
@@ -126,12 +126,12 @@ def get_marketplace_models_list(page: int = 0):
     organisation_id = get_config("MARKETPLACE_ORGANISATION_ID")
     if organisation_id is not None:
         organisation_id = int(organisation_id)
-    page_size = 16
-
     query = db.session.query(Models).filter(Models.org_id == organisation_id)
     if page < 0:
         models = query.all()
     else:
+        page_size = 16
+
         models = query.offset(page * page_size).limit(page_size).all()
 
     models_list = []
@@ -159,9 +159,11 @@ def get_models_details(page: int = 0):
     if organisation_id is not None:
         organisation_id = int(organisation_id)
 
-    if page < 0:
-        page = 0
+    page = max(page, 0)
     marketplace_models = Models.fetch_marketplace_list(page)
-    marketplace_models_with_install = Models.get_model_install_details(db.session, marketplace_models, organisation_id,
-                                                                       ModelsTypes.MARKETPLACE.value)
-    return marketplace_models_with_install
+    return Models.get_model_install_details(
+        db.session,
+        marketplace_models,
+        organisation_id,
+        ModelsTypes.MARKETPLACE.value,
+    )

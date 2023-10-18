@@ -34,11 +34,13 @@ class TwitterHelper:
         return media_ids
 
     def get_file_path(self, session, file_name, agent_id, agent_execution_id):
-        final_path = ResourceHelper().get_agent_read_resource_path(file_name,
-                                                                    agent=Agent.get_agent_from_id(session, agent_id),
-                                                                    agent_execution=AgentExecution.get_agent_execution_from_id(
-                                                                  session, agent_execution_id))
-        return final_path
+        return ResourceHelper().get_agent_read_resource_path(
+            file_name,
+            agent=Agent.get_agent_from_id(session, agent_id),
+            agent_execution=AgentExecution.get_agent_execution_from_id(
+                session, agent_execution_id
+            ),
+        )
 
     def _get_image_data(self, file_path):
         if StorageType.get_storage_type(get_config("STORAGE_TYPE", StorageType.FILE.value)) == StorageType.S3:
@@ -55,13 +57,11 @@ class TwitterHelper:
                               resource_owner_key=creds.oauth_token,
                               resource_owner_secret=creds.oauth_token_secret)
 
-        response = oauth.post(tweet_endpoint, json=params)
-        return response
+        return oauth.post(tweet_endpoint, json=params)
 
     def _get_image_data(self, file_path):
         if get_config("STORAGE_TYPE") == StorageType.S3:
             return S3Helper().read_binary_from_s3(file_path)
-        else:
-            with open(file_path, "rb") as image_file:
-                return image_file.read()
+        with open(file_path, "rb") as image_file:
+            return image_file.read()
             

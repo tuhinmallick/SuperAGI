@@ -46,8 +46,7 @@ def validate_api_key(api_key: str = Depends(validate_api_key)):
 
 @router.get("")
 def get_all(Authorize: AuthJWT = Depends(check_auth), organisation=Depends(get_user_organisation)):
-    api_keys = ApiKey.get_by_org_id(db.session, organisation.id)
-    return api_keys
+    return ApiKey.get_by_org_id(db.session, organisation.id)
 
 
 @router.delete("/{api_key_id}")

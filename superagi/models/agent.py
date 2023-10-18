@@ -297,6 +297,11 @@ class Agent(DBBaseModel):
 
     @classmethod
     def get_active_agent_by_id(cls, session, agent_id: int):
-        db_agent = session.query(Agent).filter(Agent.id == agent_id,
-                                               or_(Agent.is_deleted == False, Agent.is_deleted is None)).first()
-        return db_agent
+        return (
+            session.query(Agent)
+            .filter(
+                Agent.id == agent_id,
+                or_(Agent.is_deleted == False, Agent.is_deleted is None),
+            )
+            .first()
+        )

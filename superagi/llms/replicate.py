@@ -67,14 +67,18 @@ class Replicate(BaseLlm):
         if len(messages) == 1:
             prompt = "System:" + messages[0]['content'] + "\nResponse:"
         else:
-            prompt = prompt + "\nResponse:"
+            prompt += "\nResponse:"
         try:
             os.environ["REPLICATE_API_TOKEN"] = self.api_key
             import replicate
             output_generator = replicate.run(
-                self.model + ":" + self.version,
-                input={"prompt": prompt, "max_length": 40000, "temperature": self.temperature,
-                       "top_p": self.top_p}
+                f"{self.model}:{self.version}",
+                input={
+                    "prompt": prompt,
+                    "max_length": 40000,
+                    "temperature": self.temperature,
+                    "top_p": self.top_p,
+                },
             )
 
             final_output = ""
@@ -92,7 +96,7 @@ class Replicate(BaseLlm):
 
             return {"response": temp_output, "content": final_output}
         except Exception as exception:
-            logger.error('Replicate model ' + self.model + ' Exception:', exception)
+            logger.error(f'Replicate model {self.model} Exception:', exception)
             return {"error": exception}
 
     def verify_access_key(self):
@@ -102,12 +106,9 @@ class Replicate(BaseLlm):
         Returns:
             bool: True if the access key is valid, False otherwise.
         """
-        headers = {"Authorization": "Token " + self.api_key}
+        headers = {"Authorization": f"Token {self.api_key}"}
         response = requests.get("https://api.replicate.com/v1/collections", headers=headers)
 
         # If the request is successful, status code will be 200
-        if response.status_code == 200:
-            return True
-        else:
-            return False
+        return response.status_code == 200
 

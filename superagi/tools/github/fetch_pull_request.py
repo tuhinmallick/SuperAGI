@@ -61,6 +61,6 @@ class GithubFetchPullRequest(BaseTool):
                                                                                           repository_name,
                                                                                           time_in_seconds)
 
-            return "Pull requests: " + str(pull_request_urls)
+            return f"Pull requests: {str(pull_request_urls)}"
         except Exception as err:
             return f"Error: Unable to fetch pull requests {err}"

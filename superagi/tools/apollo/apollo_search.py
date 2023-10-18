@@ -74,16 +74,18 @@ class ApolloSearchTool(BaseTool):
         logger.info(people_data)
         people_list = []
         if people_data and 'people' in people_data and len(people_data['people']) > 0:
-            for person in people_data['people']:
-                people_list.append({'first_name': person['first_name'],
-                                    'last_name': person['last_name'],
-                                    'name': person['name'],
-                                    'linkedin_url': person['linkedin_url'],
-                                    'email': person['email'],
-                                    'headline': person['headline'],
-                                    'title': person['title'],
-                                    })
-
+            people_list.extend(
+                {
+                    'first_name': person['first_name'],
+                    'last_name': person['last_name'],
+                    'name': person['name'],
+                    'linkedin_url': person['linkedin_url'],
+                    'email': person['email'],
+                    'headline': person['headline'],
+                    'title': person['title'],
+                }
+                for person in people_data['people']
+            )
         return people_list
 
     def apollo_search_results(self, page, per_page, person_titles, num_of_employees = [],
@@ -118,16 +120,15 @@ class ApolloSearchTool(BaseTool):
 
         if num_of_employees:
             if num_of_employees[1] == num_of_employees[0]:
-                data["num_of_employees"] = [str(num_of_employees[0]) + ","]
+                data["num_of_employees"] = [f"{str(num_of_employees[0])},"]
             else:
-                data["num_of_employees"] = [str(num_of_employees[0]) + ","+ str(num_of_employees[1])]
+                data["num_of_employees"] = [
+                    f"{str(num_of_employees[0])},{str(num_of_employees[1])}"
+                ]
         if person_location:
             data["person_locations"] = [person_location]
 
         response = requests.post(url, headers=headers, data=json.dumps(data))
         print(response)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return None
+        return response.json() if response.status_code == 200 else None
 

@@ -38,12 +38,11 @@ class MarketPlaceStats(DBBaseModel):
     def get_knowledge_installation_number(cls, knowledge_id: int):
         headers = {'Content-Type': 'application/json'}
         response = requests.get(
-            marketplace_url + f"/marketplace/knowledge/downloads/{str(knowledge_id)}",
-            headers=headers, timeout=10)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return []
+            f"{marketplace_url}/marketplace/knowledge/downloads/{knowledge_id}",
+            headers=headers,
+            timeout=10,
+        )
+        return response.json() if response.status_code == 200 else []
     
     @classmethod
     def update_knowledge_install_number(cls, session, knowledge_id, install_number):

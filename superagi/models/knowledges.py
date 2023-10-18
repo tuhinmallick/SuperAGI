@@ -46,21 +46,20 @@ class Knowledges(DBBaseModel):
     def fetch_marketplace_list(cls, page):
         headers = {'Content-Type': 'application/json'}
         response = requests.get(
-            marketplace_url + f"/knowledges/marketplace/list/{str(page)}",
-            headers=headers, timeout=10)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return []
+            f"{marketplace_url}/knowledges/marketplace/list/{str(page)}",
+            headers=headers,
+            timeout=10,
+        )
+        return response.json() if response.status_code == 200 else []
     
     @classmethod
     def get_knowledge_install_details(cls, session, marketplace_knowledges, organisation):
         installed_knowledges = session.query(Knowledges).filter(Knowledges.organisation_id == organisation.id).all()
         for knowledge in marketplace_knowledges:
-            if knowledge["name"] in [installed_knowledge.name for installed_knowledge in installed_knowledges]:
-                knowledge["is_installed"] = True
-            else:
-                knowledge["is_installed"] = False
+            knowledge["is_installed"] = knowledge["name"] in [
+                installed_knowledge.name
+                for installed_knowledge in installed_knowledges
+            ]
         return marketplace_knowledges
     
     @classmethod
@@ -80,17 +79,15 @@ class Knowledges(DBBaseModel):
     def fetch_knowledge_details_marketplace(cls, knowledge_name):
         headers = {'Content-Type': 'application/json'}
         response = requests.get(
-            marketplace_url + f"/knowledges/marketplace/details/{knowledge_name}",
-            headers=headers, timeout=10)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return []
+            f"{marketplace_url}/knowledges/marketplace/details/{knowledge_name}",
+            headers=headers,
+            timeout=10,
+        )
+        return response.json() if response.status_code == 200 else []
     
     @classmethod
     def get_knowledge_from_id(cls, session, knowledge_id):
-        knowledge = session.query(Knowledges).filter(Knowledges.id == knowledge_id).first()
-        return knowledge
+        return session.query(Knowledges).filter(Knowledges.id == knowledge_id).first()
     
     @classmethod
     def add_update_knowledge(cls, session, knowledge_data):

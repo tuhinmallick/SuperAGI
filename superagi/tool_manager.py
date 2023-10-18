@@ -100,7 +100,7 @@ def update_tools_json(existing_tools_json_path, folder_links):
 
 def load_tools_config():
     tool_config_path = str(Path(__file__).parent.parent)
-    with open(tool_config_path + "/tools.json", "r") as f:
+    with open(f"{tool_config_path}/tools.json", "r") as f:
         config = json.load(f)
         return config["tools"]
 
@@ -108,7 +108,7 @@ def load_tools_config():
 def load_marketplace_tools():
     marketplace_url = "TransformerOptimus/SuperAGI-Tools"
     tools_config_path = str(Path(__file__).parent.parent)
-    tools_json_path = tools_config_path + "/tools.json"
+    tools_json_path = f"{tools_config_path}/tools.json"
     # Get folder links from the repository
     marketplace_tool_urls = get_marketplace_tool_links(marketplace_url)
     # Update existing tools.json file

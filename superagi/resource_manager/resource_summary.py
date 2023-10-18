@@ -83,8 +83,11 @@ class ResourceSummarizer:
             return
         self.generate_agent_summary(generate_all=True)
         agent_config_resource_summary = self.session.query(AgentConfiguration). \
-            filter(AgentConfiguration.agent_id == self.agent_id,
+                filter(AgentConfiguration.agent_id == self.agent_id,
                    AgentConfiguration.key == "resource_summary").first()
-        resource_summary = agent_config_resource_summary.value if agent_config_resource_summary is not None else default_summary
-        return resource_summary
+        return (
+            agent_config_resource_summary.value
+            if agent_config_resource_summary is not None
+            else default_summary
+        )
 
